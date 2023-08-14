@@ -342,7 +342,7 @@ Ask any question in the input field. Press Enter to Send. 😇 History remains o
     )
 
 demo.queue()
-demo.launch(share=True, show_error=True)
+demo.launch(show_error=True)
 
 
 
