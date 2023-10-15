@@ -335,8 +335,7 @@ with gr.Blocks() as demo:
 Ask any question in the input field. Press Enter to Send. 😇 History remains on this page!""")
 
     chatbot = gr.Chatbot(label="Chat History", height=400)    
-    msg = gr.Textbox(label="User Input", placeholder="Enter your question",
-      autofocus=True)
+    msg = gr.Textbox(label="User Input", placeholder="Enter your question")
     clear = gr.ClearButton([msg, chatbot])
     
     msg.submit(ui_func, [msg, chatbot], [msg, chatbot], queue=False).then(
