@@ -3,8 +3,11 @@ import gradio as gr
 import time
 import os
 import json
+from products_dict import products
+
 
 openai.api_key = os.environ["OPENAI_API_KEY"]
+
 
 def get_completion_from_messages(messages, model="gpt-3.5-turbo", temperature=0):
     response = openai.ChatCompletion.create(
@@ -14,6 +17,7 @@ def get_completion_from_messages(messages, model="gpt-3.5-turbo", temperature=0)
     )
     return response.choices[0]["message"]["content"] #, response.usage#, response.usage["prompt_tokens"], response.usage["completion_tokens"], response.usage["total_tokens"]
 
+
 def create_chat_str(chat_hist_ui):
     chat_str = ""
     for h in chat_hist_ui:
@@ -21,6 +25,7 @@ def create_chat_str(chat_hist_ui):
         chat_str += f"Human: {usermsg}\n"
         chat_str += f"Assistant: {assmsg}\n"
     return chat_str
+
 
 # Create a standalone question
 def create_standalone_question(user_input, chat_history_str):
@@ -45,7 +50,20 @@ Standalone question:
     print("standalone: ", answer)
     return answer
 
+
+def get_categs_and_prods_str():
+    categs = list(set([p["category"] for p in products.values()]))
+    prods=[]
+    for c in categs:
+        prods += [c + " category:\n"+ "\n".join([p["title"] for p in products.values() if p["category"] == c])]
+    # print("\n\n".join(prods))
+    prods_str = "\n\n".join(prods)
+    categs_str = ", ".join(categs)
+    return prods_str, categs_str
+
+
 def get_category_and_products_from_user_input(user_input):
+    prods_str, categs_str = get_categs_and_prods_str()
     delimiter = "####"
     system_message = f"""
 You will be provided with customer service queries. \
@@ -53,7 +71,7 @@ The customer service query will be delimited with \
 {delimiter} characters.
 Output a python list of objects, where each object has \
 the following format:
-    'category': <one of smartphones, laptops, air_conditioners>,
+    'category': <one of {categs_str}>,
 OR
     'products': <a list of products that must \
     be found in the allowed products below>
@@ -67,29 +85,14 @@ empty list.
 
 Allowed products: 
 
-smartphones category:
-iPhone 9
-iPhone X
-Samsung Universe 9
-OPPOF19
-Huawei P30
-
-laptops category:
-MacBook Pro
-Samsung Galaxy Book
-Microsoft Surface Laptop 4
-Infinix INBOOK
-HP Pavilion 15-DK1056WM
-
-air_conditioners category:
-LG Arctic 500 Split AC
-LG Chilling 365 Window AC
+{prods_str}
 
 Only output the list of objects, with nothing else.
 """
     messages = [{'role': 'system', 'content': system_message},
-        {'role': 'user', 'content': f"{delimiter}I want to buy Samsung Galaxy Book and Infinix INBOOK. Also tell me about your air conditoners{delimiter}"},
-        {'role': 'assistant', 'content': "[{'category': 'laptops', 'products': ['Samsung Galaxy Book', 'Infinix INBOOK']}, {'category': 'air_conditioners'}]"},
+        {'role': 'user', 'content': f"{delimiter}I want to buy Skyverse S2 and Victor 3. Also tell me about your air conditoners.{delimiter}"},
+        {'role': 'assistant',
+         'content': "[{'category': 'smartphones', 'products': ['Skyverse S2', 'Victor 3']}, {'category': 'air_conditioners'}]"},
         {'role': 'user', 'content': f"{delimiter}{user_input}{delimiter}"}
     ]
     
@@ -97,134 +100,14 @@ Only output the list of objects, with nothing else.
     print("category and products: ", answer)
     return answer
 
-products = {
-    "iPhone 9": {
-      "id": 1,
-      "title": "iPhone 9",
-#       "description": "An apple mobile which is nothing like apple",
-      "price": 549,
-      "rating": 4.69,
-      "stock": 94,
-      "brand": "Apple",
-      "category": "smartphones"
-    },
-    "iPhone X": {
-      "id": 2,
-      "title": "iPhone X",
-#       "description": "SIM-Free, Model A19211 6.5-inch Super Retina HD display with OLED technology A12 Bionic chip with ...",
-      "price": 899,
-      "rating": 4.44,
-      "stock": 34,
-      "brand": "Apple",
-      "category": "smartphones"
-    },
-    "Samsung Universe 9": {
-      "id": 3,
-      "title": "Samsung Universe 9",
-#       "description": "Samsung's new variant which goes beyond Galaxy to the Universe",
-      "price": 1249,
-      "rating": 4.09,
-      "stock": 36,
-      "brand": "Samsung",
-      "category": "smartphones"
-    },
-    "OPPOF19": {
-      "id": 4,
-      "title": "OPPOF19",
-#       "description": "OPPO F19 is officially announced on April 2021.",
-      "price": 280,
-      "rating": 4.3,
-      "stock": 123,
-      "brand": "OPPO",
-      "category": "smartphones"
-    },
-    "Huawei P30": {
-      "id": 5,
-      "title": "Huawei P30",
-#       "description": "Huawei’s re-badged P30 Pro New Edition was officially unveiled yesterday in Germany and now the device has made its way to the UK.",
-      "price": 499,
-      "rating": 4.09,
-      "stock": 32,
-      "brand": "Huawei",
-      "category": "smartphones"
-    },
-    "MacBook Pro": {
-      "id": 6,
-      "title": "MacBook Pro",
-#       "description": "MacBook Pro 2021 with mini-LED display may launch between September, November",
-      "price": 1749,
-      "rating": 4.57,
-      "stock": 83,
-      "brand": "Apple",
-      "category": "laptops"
-    },
-    "Samsung Galaxy Book": {
-      "id": 7,
-      "title": "Samsung Galaxy Book",
-#       "description": "Samsung Galaxy Book S (2020) Laptop With Intel Lakefield Chip, 8GB of RAM Launched",
-      "price": 1499,
-      "rating": 4.25,
-      "stock": 50,
-      "brand": "Samsung",
-      "category": "laptops"
-    },
-    "Microsoft Surface Laptop 4": {
-      "id": 8,
-      "title": "Microsoft Surface Laptop 4",
-#       "description": "Style and speed. Stand out on HD video calls backed by Studio Mics. Capture ideas on the vibrant touchscreen.",
-      "price": 1499,
-      "rating": 4.43,
-      "stock": 68,
-      "brand": "Microsoft Surface",
-      "category": "laptops"
-    },
-    "Infinix INBOOK": {
-      "id": 9,
-      "title": "Infinix INBOOK",
-#       "description": "Infinix Inbook X1 Ci3 10th 8GB 256GB 14 Win10 Grey – 1 Year Warranty",
-      "price": 1099,
-      "rating": 4.54,
-      "stock": 96,
-      "brand": "Infinix",
-      "category": "laptops"
-    },
-    "HP Pavilion 15-DK1056WM": {
-      "id": 10,
-      "title": "HP Pavilion 15-DK1056WM",
-#       "description": "HP Pavilion 15-DK1056WM Gaming Laptop 10th Gen Core i5, 8GB, 256GB SSD, GTX 1650 4GB, Windows 10",
-      "price": 1099,
-      "rating": 4.43,
-      "stock": 89,
-      "brand": "HP Pavilion",
-      "category": "laptops"
-    },
-    "LG Arctic 500 Split AC": {
-      "id": 11,
-      "title": "LG Arctic 500 Split AC",
-#       "description": "LG Arctic 500 Split AC 1.2 Ton, 4 Star, Copper Condenser, Dual Inverter, ADC sensor, Ocean Black Protection",
-      "price": 1200,
-      "rating": 4.71,
-      "stock": 31,
-      "brand": "LG Arctic",
-      "category": "air_conditioners"
-    },
-    "LG Chilling 365 Window AC": {
-      "id": 12,
-      "title": "LG Chilling 365 Window AC",
-#       "description": "LG Chilling 365 Window AC 1.5 Ton, 5 Star, Copper Tubes, DUAL Inverter, Convertible 4-in-1 Cooling, Clean Filter Indication",
-      "price": 1400,
-      "rating": 4.95,
-      "stock": 48,
-      "brand": "LG Chilling",
-      "category": "air_conditioners"
-    }
-}
 
 def get_product_by_name(name):
     return products.get(name, None)
 
+
 def get_products_by_category(category):
     return [product for product in products.values() if product["category"] == category]
+
 
 def read_string_to_list(input_string):
     if input_string is None:
@@ -237,6 +120,7 @@ def read_string_to_list(input_string):
     except json.JSONDecodeError:
         print("Error: Invalid JSON string")
         return None   
+
 
 def generate_output_string(data_list):
     output_string = ""
@@ -266,9 +150,12 @@ def generate_output_string(data_list):
 
     return output_string 
 
+
 def answer_user_question_with_relevant_info(user_input, product_info):
     delimiter="####"
     system_message_4 = f"""\
+You are the AI Assistant of Hi-Fi Electronics (an online store).
+All prices are in INR.
 Respond in a friendly and helpful tone, with very concise answers.
 Make sure to ask the user relevant follow up questions.
 User input will be delimited by {delimiter} characters.\
@@ -282,6 +169,7 @@ User input will be delimited by {delimiter} characters.\
     answer = get_completion_from_messages(messages)
     print("final answer: ", answer)
     return answer
+
 
 def process_user_message(user_input, chat_hist_ui):
     user_input = user_input.strip()
@@ -315,8 +203,10 @@ def process_user_message(user_input, chat_hist_ui):
 #     elif department == "Others":
 #         return "I am still being developed for this department. Let me connect you to our customer support"
 
+
 def ui_add_usermsg_to_history(user, history):
     return "", history + [[user, None]]
+
 
 def ui_get_ai_response(history):
     greet, history = history[0], history[1:]
