@@ -315,31 +315,45 @@ def process_user_message(user_input, chat_hist_ui):
 #     elif department == "Others":
 #         return "I am still being developed for this department. Let me connect you to our customer support"
 
-def ui_func(user, history):
+def ui_add_usermsg_to_history(user, history):
     return "", history + [[user, None]]
 
-def ui_func_2(history):
+def ui_get_ai_response(history):
+    greet, history = history[0], history[1:]
     user = history.pop()[0]
+    
     try:
         response = process_user_message(user, history)
-        history.append([user, response])
-        return "", history
+        history += [[user, response]]
+        user = ""
     except Exception as exp:
         print("Error!")
         print(exp)
         gr.Warning(str(exp))
-        return user, history
+    
+    return user, [greet] + history
 
 with gr.Blocks() as demo:
     gr.Markdown("""# Chatbot of an Electronics Store
 Ask any question in the input field. Press Enter to Send. 😇 History remains on this page!""")
 
-    chatbot = gr.Chatbot(label="Chat History", height=400)    
+    chatbot = gr.Chatbot(
+        value=[[None, "Welcome to Hi-Fi Electronics! How may I help you today?"]],
+        label="Chat History", height=400
+    )    
     msg = gr.Textbox(label="User Input", placeholder="Enter your question")
     clear = gr.ClearButton([msg, chatbot])
     
-    msg.submit(ui_func, [msg, chatbot], [msg, chatbot], queue=False).then(
-      ui_func_2, chatbot, [msg, chatbot]
+    gr.Examples(
+        examples=[
+            "Tell me about Accel Note 5 smartphone",
+            "What air conditioners do you sell?"
+        ],
+        inputs=[msg]
+    )
+
+    msg.submit(ui_add_usermsg_to_history, [msg, chatbot], [msg, chatbot], queue=False).then(
+      ui_get_ai_response, chatbot, [msg, chatbot]
     )
 
 demo.queue()
