@@ -284,7 +284,8 @@ User input will be delimited by {delimiter} characters.\
     return answer
 
 def process_user_message(user_input, chat_hist_ui):
-    if user_input.strip() == "":
+    user_input = user_input.strip()
+    if user_input == "":
         raise Exception("No input")
     
     if len(chat_hist_ui) > 0:
@@ -325,8 +326,8 @@ def ui_func_2(history):
         return "", history
     except Exception as exp:
         print("Error!")
-        print(exp.args)
-        gr.Warning(str(exp.args))
+        print(exp)
+        gr.Warning(str(exp))
         return user, history
 
 with gr.Blocks() as demo:
@@ -334,7 +335,8 @@ with gr.Blocks() as demo:
 Ask any question in the input field. Press Enter to Send. 😇 History remains on this page!""")
 
     chatbot = gr.Chatbot(label="Chat History", height=400)    
-    msg = gr.Textbox(label="User Input", placeholder="Enter your question")
+    msg = gr.Textbox(label="User Input", placeholder="Enter your question",
+      autofocus=True)
     clear = gr.ClearButton([msg, chatbot])
     
     msg.submit(ui_func, [msg, chatbot], [msg, chatbot], queue=False).then(
