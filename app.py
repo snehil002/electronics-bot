@@ -236,8 +236,8 @@ def ui_get_ai_response(history, bot_logs):
     return user, [greet] + history, bot_logs, bot_logs
 
 with gr.Blocks() as demo:
-    gr.Markdown("""# Hi-Fi Helper: Your AI Shopping Companion
-Unleash the Power of Conversational Commerce 🛍️ - Chat, Explore, Shop with Ease!""")
+    gr.Markdown("""# 🚀 Hi-Fi Helper: Your AI Shopping Companion
+Unleash the Power of Conversational Commerce 👜 - Chat, Explore, Shop with Ease!""")
 
     default_logs = []
 
