@@ -283,7 +283,7 @@ Unleash the Power of Conversational Commerce 👜 - Chat, Explore, Shop with Eas
     * openai
     * gradio
     * gpt-3.5-turbo
-3. My name is X and I made this chatbot.""")
+3. My name is Snehil Kumar and I made this chatbot.""")
 
     sendbtn.click(ui_add_usermsg_to_history, [msg, chatbot], [msg, chatbot], queue=False).then(
         ui_get_ai_response, [chatbot, bot_logs], [
