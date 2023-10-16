@@ -29,7 +29,10 @@ def create_chat_str(chat_hist_ui):
 
 # Create a standalone question
 def create_standalone_question(user_input, chat_history_str):
-    user_message_1 = f"""
+    user_message_1 = f"""\
+You are Hi-Fi Helper, the AI assistant of Hi-Fi Electronics (an online store).
+The store sells smartphones, laptops and air conditioners.
+
 You will be provided with a Chat history and a follow up question.
 Rephrase the follow up question to be a stand alone question from \
 the perspective of a customer.
@@ -154,7 +157,7 @@ def generate_output_string(data_list):
 def answer_user_question_with_relevant_info(user_input, product_info):
     delimiter="####"
     system_message_4 = f"""\
-You are the AI Assistant of Hi-Fi Electronics (an online store).
+You are Hi-Fi Helper, the AI Assistant of Hi-Fi Electronics (an online store).
 All prices are in INR.
 Respond in a friendly and helpful tone, with very concise answers.
 Make sure to ask the user relevant follow up questions.
@@ -173,6 +176,8 @@ User input will be delimited by {delimiter} characters.\
 
 def process_user_message(user_input, chat_hist_ui):
     user_input = user_input.strip()
+    bot_log = {}
+
     if user_input == "":
         raise Exception("No input")
     
@@ -180,70 +185,113 @@ def process_user_message(user_input, chat_hist_ui):
         chat_str = create_chat_str(chat_hist_ui)
         time.sleep(10)
         user_input = create_standalone_question(user_input, chat_str)  # LLM
-#         user_input = response_tup[0]
-#         tokens += response_tup[1]["total_tokens"]
+        bot_log["standalone_question"] = user_input
+    #         user_input = response_tup[0]
+    #         tokens += response_tup[1]["total_tokens"]
 
-#     time.sleep(15)
-#     response = read_string_to_list(classify_user_input(standalone_query)) # LLM
-#     department = response['category']
-#     if department == "Product_Inquiry":
+    #     time.sleep(15)
+    #     response = read_string_to_list(classify_user_input(standalone_query)) # LLM
+    #     department = response['category']
+    #     if department == "Product_Inquiry":
     
     time.sleep(10)
     category_and_products_str = get_category_and_products_from_user_input(user_input) # LLM
-#     category_and_products_str = response_tup[0]
-#     tokens += response_tup[1]["total_tokens"]
+    bot_log["extracted_prod_categ"] = category_and_products_str
+    #     category_and_products_str = response_tup[0]
+    #     tokens += response_tup[1]["total_tokens"]
+    
     category_and_products_list = read_string_to_list(category_and_products_str)
     product_info = generate_output_string(category_and_products_list)
+    bot_log["fetched_prod_info"] = product_info
     
     time.sleep(10)
     answer = answer_user_question_with_relevant_info(user_input, product_info) # LLM
-#     tokens += response_tup[1]["total_tokens"]
-    return answer
+    bot_log["final_answer"] = answer
+    #     tokens += response_tup[1]["total_tokens"]
+    
+    return answer, bot_log
 
-#     elif department == "Others":
-#         return "I am still being developed for this department. Let me connect you to our customer support"
+    #     elif department == "Others":
+    #         return "I am still being developed for this department. Let me connect you to our customer support"
 
 
 def ui_add_usermsg_to_history(user, history):
     return "", history + [[user, None]]
 
 
-def ui_get_ai_response(history):
+def ui_get_ai_response(history, bot_logs):
     greet, history = history[0], history[1:]
     user = history.pop()[0]
     
     try:
-        response = process_user_message(user, history)
+        response, bot_log = process_user_message(user, history)
         history += [[user, response]]
         user = ""
+        bot_logs += [bot_log]
     except Exception as exp:
         print("Error!")
         print(exp)
         gr.Warning(str(exp))
     
-    return user, [greet] + history
+    return user, [greet] + history, bot_logs, bot_logs
 
 with gr.Blocks() as demo:
-    gr.Markdown("""# Chatbot of an Electronics Store
-Ask any question in the input field. Press Enter to Send. 😇 History remains on this page!""")
+    gr.Markdown("""# Hi-Fi Helper: Your AI Shopping Companion
+Unleash the Power of Conversational Commerce 🛍️ - Chat, Explore, Shop with Ease!""")
 
-    chatbot = gr.Chatbot(
-        value=[[None, "Welcome to Hi-Fi Electronics! How may I help you today?"]],
-        label="Chat History", height=400
-    )    
-    msg = gr.Textbox(label="User Input", placeholder="Enter your question")
-    clear = gr.ClearButton([msg, chatbot])
-    
-    gr.Examples(
-        examples=[
-            "Tell me about Accel Note 5 smartphone",
-            "What air conditioners do you sell?"
-        ],
-        inputs=[msg]
+    default_logs = []
+
+    with gr.Tab("Chat Lounge"):
+        chatbot = gr.Chatbot(
+            value=[[None, "Welcome to Hi-Fi Electronics! How may I help you today?"]],
+            label="Chat History", height=400
+        )
+        msg = gr.Textbox(label="User Input", placeholder="Enter your question")
+        sendbtn = gr.Button("Ignite AI Power", variant="primary")
+        clear = gr.ClearButton([msg, chatbot])
+        
+        gr.Examples(
+            examples=[
+                "Tell me about Accel Note 5 smartphone",
+                "What air conditioners do you sell?",
+                "Show me the cheapest laptop that you have"
+            ],
+            inputs=[msg]
+        )
+
+    with gr.Tab("AI Chronicles"):
+        bot_logs = gr.State(value=default_logs)
+        logs_json_comp = gr.JSON(value=default_logs)
+
+    with gr.Tab("Catalog Wonderland"):
+        gr.JSON(value=products)
+
+    with gr.Tab("Instructions"):
+        gr.Markdown("""## Ready to get started?
+
+1. Ask any questions in the input field.
+2. Simply press 'Enter' or 'Ignite AI Power' Button to send your message. 
+3. 'Chat Lounge': Entire Conversation History remains on this page!
+4. 'AI chronicles': Some Interal System Logs.
+5. 'Catalog Wonderland': Full product catalog of Hi-Fi Electronics Store. 😇
+
+## Note:
+
+1. The Hi-Fi electronics online store and its product names are imaginary.
+2. This AI powered chatbot system is created using below technologies:
+    * Python
+    * openai
+    * gradio
+    * gpt-3.5-turbo
+3. My name is X and I made this chatbot.""")
+
+    sendbtn.click(ui_add_usermsg_to_history, [msg, chatbot], [msg, chatbot], queue=False).then(
+        ui_get_ai_response, [chatbot, bot_logs], [
+            msg, chatbot, bot_logs, logs_json_comp]
     )
 
     msg.submit(ui_add_usermsg_to_history, [msg, chatbot], [msg, chatbot], queue=False).then(
-      ui_get_ai_response, chatbot, [msg, chatbot]
+      ui_get_ai_response, [chatbot, bot_logs], [msg, chatbot, bot_logs, logs_json_comp]
     )
 
 demo.queue()
