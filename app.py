@@ -236,8 +236,7 @@ def ui_get_ai_response(history, bot_logs):
     return user, [greet] + history, bot_logs, bot_logs
 
 with gr.Blocks() as demo:
-    gr.Markdown("""# Hi-Fi Helper: Your AI Shopping Companion
-Unleash the Power of Conversational Commerce 👜 - Chat, Explore, Shop with Ease!""")
+    gr.Markdown("""# Hi-Fi Helper: AI Electronics Shopping Assistant""")
 
     default_logs = []
 
@@ -247,7 +246,7 @@ Unleash the Power of Conversational Commerce 👜 - Chat, Explore, Shop with Eas
             label="Chat History", height=400
         )
         msg = gr.Textbox(label="User Input", placeholder="Enter your question")
-        sendbtn = gr.Button("Ignite AI Power", variant="primary")
+        sendbtn = gr.Button("Ask AI", variant="primary")
         clear = gr.ClearButton([msg, chatbot])
         
         gr.Examples(
@@ -263,27 +262,18 @@ Unleash the Power of Conversational Commerce 👜 - Chat, Explore, Shop with Eas
         bot_logs = gr.State(value=default_logs)
         logs_json_comp = gr.JSON(value=default_logs)
 
-    with gr.Tab("Catalog Wonderland"):
+    with gr.Tab("Explore Products"):
         gr.JSON(value=products)
 
-    with gr.Tab("Instructions"):
+    with gr.Tab("Get Started"):
         gr.Markdown("""## Ready to get started?
 
 1. Ask any questions in the input field.
-2. Simply press 'Enter' or 'Ignite AI Power' Button to send your message. 
+2. Simply press 'Enter' or 'Ask AI' Button to send your message. 
 3. 'Chat Lounge': Entire Conversation History remains on this page!
-4. 'AI chronicles': Some Interal System Logs.
-5. 'Catalog Wonderland': Full product catalog of Hi-Fi Electronics Store. 😇
-
-## Note:
-
-1. The Hi-Fi electronics online store and its product names are imaginary.
-2. This AI powered chatbot system is created using below technologies:
-    * Python
-    * openai
-    * gradio
-    * gpt-3.5-turbo
-3. My name is Snehil Kumar and I made this chatbot.""")
+4. 'AI chronicles': Interal System Logs.
+5. 'Explore Products': Full product catalog of Hi-Fi Electronics Store. 😇
+""")
 
     sendbtn.click(ui_add_usermsg_to_history, [msg, chatbot], [msg, chatbot], queue=False).then(
         ui_get_ai_response, [chatbot, bot_logs], [
